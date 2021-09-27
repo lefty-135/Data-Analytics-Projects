@@ -1,0 +1,72 @@
+---
+title: "MIS 510 Portfolio Project Option 1"
+author: "Madelaine Bass"
+date: "November 22, 2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Exploration  
+In this section, import the data and run at least 5 appropriate data exploration functions.  
+
+```{r}
+#Import the data
+German_credit <- read.csv("C:\\Users\\bassg\\Documents\\Grad School\\MIS510\\GermanCredit.csv", header = TRUE)
+
+#Data Exploration Functions
+hist(German_credit$AGE)
+range(German_credit$AGE)
+mean(German_credit$AMOUNT)
+range(German_credit$DURATION)
+hist(German_credit$EDUCATION)
+range(German_credit$INSTALL_RATE)
+```
+  
+## Training and Validation Partitions  
+In this section, divide the data into training and validation partitions.
+
+```{r}
+#Partition Data
+set.seed(2)
+train.index <- sample(c(1:dim(German_credit)[1]), dim(German_credit)[1]*0.6)
+train.df <- German_credit[train.index, ]
+valid.df <- German_credit[-train.index, ]
+```
+  
+## Classification Models  
+In this section, explore classification using one of three data mining techniques: logistic regression, classification trees, or neural networks. Analyze the results and include any appropriate visualizations.  
+```{r}
+# Logistic Regression
+logit.reg <- glm(RESPONSE ~ CHK_ACCT + DURATION + HISTORY + NEW_CAR + USED_CAR + FURNITURE + RADIO.TV + EDUCATION + RETRAINING + AMOUNT + SAV_ACCT + EMPLOYMENT + INSTALL_RATE + MALE_DIV + MALE_SINGLE + MALE_MAR_or_WID + CO.APPLICANT + GUARANTOR + PRESENT_RESIDENT + REAL_ESTATE + PROP_UNKN_NONE + AGE + OTHER_INSTALL + RENT + OWN_RES + NUM_CREDITS + JOB + NUM_DEPENDENTS + TELEPHONE + FOREIGN, data = train.df, family = "binomial")
+summary(logit.reg)
+
+#Classification tree
+library(rpart)
+library(rpart.plot)
+class.tree <- rpart(RESPONSE ~ CHK_ACCT + DURATION + HISTORY + NEW_CAR + USED_CAR + FURNITURE + RADIO.TV + EDUCATION + RETRAINING + AMOUNT + SAV_ACCT + EMPLOYMENT + INSTALL_RATE + MALE_DIV + MALE_SINGLE + MALE_MAR_or_WID + CO.APPLICANT + GUARANTOR + PRESENT_RESIDENT + REAL_ESTATE + PROP_UNKN_NONE + AGE + OTHER_INSTALL + RENT + OWN_RES + NUM_CREDITS + JOB + NUM_DEPENDENTS + TELEPHONE + FOREIGN, data = German_credit, control = rpart.control(maxdepth = 30), method = "class")
+prp(class.tree, type = 1, extra = 1, split.font = 1, varlen = -10)
+```
+  
+## Logistic Equation  
+$Logit(Reponse = Good) = 1.204 + 0.5516CHK_ACCT - 0.04645DURATION + 0.4896HISTORY - 1.123NEW_CAR + 0.8601USED_CAR - 0.578FURNITURE - 0.4536RADIO.TV - 1.258EDUCATION - 0.5899RETRAINING - (5.295e-5)AMOUNT + 0.2471SAV_ACCT + 0.2238EMPLOYMENT - 0.233INSTALL_RATE - 0.4767MALE_DIV + 0.3285MALE_SINGLE - 0.04849MALE_MAR_or_WID + 0.06646CO.APPLICANT + 1.731GUARANTOR - 0.01548PRESENT_RESIDENT + 0.2617REAL_ESTATE - 0.5628PROP_UNKN_NONE + 0.01358AGE - 0.4493OTHER_INSTALL - 0.1535RENT + 0.08991OWN_RES - 0.5488NUM_CREDITS - 0.2046JOB - 0.1979NUM_DEPENDENTS + 0.413TELEPHONE + 1.06FOREIGN$  
+  
+## Analysis  
+  
+Based on the summary output of the logistic regression function, I would include the variables CHK_ACCOUNT, DURATION, HISTORY, NEW_CAR, SAV_ACCT, EMPLOYMENT, INSTALL_RATE, GUARANTOR, and NUM_CREDITS based on an alpha of 0.05 compared to each variable's p-value. Of course this could change if using some sort of step-wise regression. The equation when using every single variable can be found above. When credit is good, i.e. RESPONSE = 1, then the impact of the intercept would be 1.204, CHK_ACCOUNT 0.5516, DURATION -0.04645, HISTORY 0.4896, NEW_CAR -1.123, USED_CAR 0.8601, FURNITURE -0.578, RADIO.TV -0.4536, EDUCATION -1.258, RETRAINING -0.5899, AMOUNT -5.295e-5, SAV_ACCT 0.2471, EMPLOYMENT 0.2238, INSTALL_RATE -0.233, MALE_DIV -0.4767, MALE_SINGLE 0.3285, MALE_MAR_or_WID -0.04849, CO.APPLICANT 0.06646, GUARANTOR 1.1731, PRESENT_RESIDENT -0.01548, REAL_ESTATE 0.2617, PROP_UNKN_NONE -0.5628, AGE 0.01358, OTHER_INSTALL -0.4493, RENT -0.1535, OWN_RES 0.08991, NUM_CREDITS -0.5488, TELEPHONE 0.413, and FOREIGN 1.06.  
+  
+As for the classification tree, we can see that it determined which two variables were necessary: CHK_ACCT and DURATION. Just to be sure that this wasn't an error, when taking out the varaible CHK_ACCT the new decision tree will use HISTORY and SAV_ACCT. But when changing the maximum depth to 30-- which is the true maximum depth that can be chosen-- only 11 variables are used. These variables are CHK_ACCT, DURATION, HISTORY, SAV_ACCT, DURATION (again but at greater than or equal to 48 and not just 23), USED_CAR, AMOUNT, DURATION (at greater than or equal to 12 instead of 23), AMOUNT (at less than 1388 and not at greater than or equal to 7492), GUARANTOR, and NUM_CREDIT.
+
+
+## Reflection  
+  
+The first section of this assignment was to import the data into RStudio and run a minimum of five data exploration funcitons. Data exploration functions give the opportunity to explre the data and get a feel for waht it is telling you. The results of these data exploration functions can help guide you towards what type of analysis you should conduct. In this section, I chose to run a histogram of the variables AGE and EDUCATION. I chose these so that I could see how the data was spread. I wanted to see what age most of these people were and if most of them were educated or not. I can tell that based on the information, most of these people are between the age of 20 and 40 and that most of these people are not educated -- under the assumption that 1 is a "yes" for education and a 0 is a "no" for education. I also chose to find the range of the variables AGE, DURATION, and INSTALL_RATE. I wanted to see what range of ages this data set looked at, the duration of credit per person, and the installment rate. I finally found the mean of the AMOUNT variable. From this I can tell that the average credit amount is about 3271. This section posed no issues to complete. These data exploration functions have been conducted in numerous assignments by now and therefore pose little to no difficulty.  
+  
+The second part in this assignment was to partition the data into training and validation parts. This is typically used to divide the data set into two parts, one to train a model and one to validate it's accuracy. If the model that was created using the training data can accurately predict the validation set, then you have a good model. I used the code in table 10.2 to do this. I was nervous that this section might cause issues due to my unfamiliarity utilizing this code. However, despite my apprehension, I had no issues running this section. In fact, once I found the section to model my code off of, I had no issues. It ran the first time with no errors.  
+  
+The final section of this assignment was to explore classification models using two of three techniques. I chose to use logistic regression and a classifiation tree. Since we have previously run logistic regression functions, I was confident in my ability to run this function. I ran this function the first time with no issues. As I stated above, I would suggest using only significant predictors in the model. There are many reasons for this; the main two being that the model is incredibly long and that you wouldn't be completely accurate in your predictions by utilizing insignificant predictors. While, in this case, the significant predictors often had larger coefficients, that is not always the case. While sometimes a long list of variables are significant predictors, in this case that is not true. It kind of feels like over kill with how many variables are used that aren't significant. The classification tree is a good way to visually see a model and how to get to a final result using various levels within variables. I liked this classification model because I could visually see which requirements got you to each outcome; good or bad credit. I was not aware that a classification tree could use the same variable more than once. This could be seen through the model above how DURATION and AMOUNT were used more than once. I also learned what the "Depth" meant in the code. I originally thought that there were only two variables needed to predict the RESPONSE. This was not true when I changed the depth from 2 to 30. Figuring this out helped me create the model above. When creating the logistic regression and decision tree models, the only issues were that initially I included "OBS" as a variable and that I had to figure out which packages to install to get the classification tree to run properly. I could not quite figure out how to only look at select variables so instead I had to create my models not using OBS as a variable.  
+  
+Overall this project was not super difficult to complete. Other than figuring out which packages to install, minimal errors presented themselves. This was also a good way to show the different classification models that can be used on the same data set. Some are more visual than others. A classification tree is a visual way to display how to come to the conclusion of which scenarios mean a person has good or bad credit. A logistic regression function can show how to calculate if a person has good or bad credit.
+
